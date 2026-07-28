@@ -34,7 +34,7 @@ def display_chart(
     if isinstance(result, Exception):
         st.error(f"Error generating {label}: {result}")
     elif result is not None:
-        st.plotly_chart(result, width="stretch")
+        st.plotly_chart(result, key=key, width="stretch")
 
     st.divider()
 
@@ -54,12 +54,18 @@ transformer = DataTransformer()
 
 # Load persisted config (merged with defaults)
 cfg = config_manager.load()
+dev_mode = config_manager.dev_mode
 
 # ---------------------------------------------------------------------------
 # Sidebar
 # ---------------------------------------------------------------------------
 with st.sidebar:
     st.header("Configuration")
+
+    if dev_mode:
+        st.info(
+            "🧪 Dev mode active — using example.journal, config not persisted"
+        )
 
     filename = st.text_input(
         "HLedger Journal File Path",
@@ -92,22 +98,28 @@ with st.sidebar:
 
     # Date range
     current_year = date.today().year
+    default_start = date(2021, 1, 1) if dev_mode else date(current_year, 1, 1)
+    default_end = date(2021, 12, 31) if dev_mode else date.today()
     start_date = st.date_input(
         "Start Date",
-        value=date(current_year, 1, 1),
+        value=default_start,
         help="Beginning date for the report (hledger -b flag)",
     )
     end_date = st.date_input(
         "End Date",
-        value=date.today(),
+        value=default_end,
         help="End date for the report (hledger -e flag)",
     )
 
     col_save, col_reset = st.columns(2)
     with col_save:
-        save_btn = st.button("Save Config", use_container_width=True)
+        save_btn = st.button(
+            "Save Config", use_container_width=True, disabled=dev_mode
+        )
     with col_reset:
-        reset_btn = st.button("Reset to Defaults", use_container_width=True)
+        reset_btn = st.button(
+            "Reset to Defaults", use_container_width=True, disabled=dev_mode
+        )
 
     # ---- Account Regex Patterns ----
     st.subheader("Account Regex Patterns")

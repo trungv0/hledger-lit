@@ -12,6 +12,9 @@ from hledger_lit.models import AppConfig
 class ConfigManager:
     """Manages loading, saving, and resetting hledger-lit configuration."""
 
+    DEV_MODE_ENV_VAR = "HLEDGER_LIT_DEV"
+    DEV_MODE_TRUE_VALUES = {"1", "true", "yes", "on"}
+
     # Default account-matching regex patterns
     ASSET_REGEX = "assets"
     LIABILITY_REGEX = "liabilities"
@@ -68,6 +71,21 @@ class ConfigManager:
         """The path to the INI config file."""
         return self._config_path
 
+    @classmethod
+    def _is_dev_mode(cls) -> bool:
+        """Whether HLEDGER_LIT_DEV is set to a truthy value."""
+        return os.environ.get(cls.DEV_MODE_ENV_VAR, "").lower() in cls.DEV_MODE_TRUE_VALUES
+
+    @property
+    def dev_mode(self) -> bool:
+        """Whether dev mode is active (ignores persisted config, uses example.journal)."""
+        return self._is_dev_mode()
+
+    @staticmethod
+    def _example_journal_path() -> Path:
+        """Path to the bundled example.journal at the repo root."""
+        return Path(__file__).resolve().parent.parent / "example.journal"
+
     def _read_ini(self) -> configparser.ConfigParser:
         """Read the INI config file (if it exists) and return the parser."""
         config = configparser.ConfigParser()
@@ -87,6 +105,21 @@ class ConfigManager:
 
     def load(self) -> AppConfig:
         """Load persisted configuration, falling back to built-in defaults."""
+        if self.dev_mode:
+            return AppConfig(
+                filename=str(self._example_journal_path()),
+                commodity="£",
+                income_regex=self.INCOME_REGEX,
+                expense_regex=self.EXPENSE_REGEX,
+                asset_regex=self.ASSET_REGEX,
+                liability_regex=self.LIABILITY_REGEX,
+                historical_cmd=self.DEFAULT_HISTORICAL_CMD,
+                expenses_cmd=self.DEFAULT_EXPENSES_CMD,
+                income_expenses_cmd=self.DEFAULT_INCOME_EXPENSES_CMD,
+                all_flows_cmd=self.DEFAULT_ALL_FLOWS_CMD,
+                daily_expenses_cmd=self.DEFAULT_DAILY_EXPENSES_CMD,
+            )
+
         ini = self._read_ini()
         return AppConfig(
             filename=self._get(

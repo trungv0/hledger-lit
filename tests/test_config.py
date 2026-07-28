@@ -57,6 +57,7 @@ class TestSaveLoadRoundTrip:
             expenses_cmd="hledger bal expenses",
             income_expenses_cmd="hledger bal inc exp",
             all_flows_cmd="hledger bal all",
+            daily_expenses_cmd="hledger bal expenses --period daily",
         )
 
         config_manager.save(original)
@@ -72,6 +73,7 @@ class TestSaveLoadRoundTrip:
         assert loaded.expenses_cmd == original.expenses_cmd
         assert loaded.income_expenses_cmd == original.income_expenses_cmd
         assert loaded.all_flows_cmd == original.all_flows_cmd
+        assert loaded.daily_expenses_cmd == original.daily_expenses_cmd
 
     def test_save_returns_path(self, config_manager: ConfigManager):
         cfg = config_manager.load()
@@ -83,6 +85,56 @@ class TestSaveLoadRoundTrip:
 # ---------------------------------------------------------------------------
 # reset()
 # ---------------------------------------------------------------------------
+
+
+class TestDevMode:
+    def test_dev_mode_off_by_default(self, config_manager: ConfigManager):
+        assert config_manager.dev_mode is False
+
+    @pytest.mark.parametrize("value", ["1", "true", "TRUE", "yes", "on"])
+    def test_dev_mode_true_variants(
+        self,
+        config_manager: ConfigManager,
+        monkeypatch: pytest.MonkeyPatch,
+        value: str,
+    ):
+        monkeypatch.setenv(ConfigManager.DEV_MODE_ENV_VAR, value)
+        assert config_manager.dev_mode is True
+
+    def test_dev_mode_ignores_saved_config(
+        self, config_manager: ConfigManager, monkeypatch: pytest.MonkeyPatch
+    ):
+        custom = AppConfig(
+            filename="/tmp/test.journal",
+            commodity="$",
+            income_regex="revenue",
+            expense_regex="cost",
+            asset_regex="cash",
+            liability_regex="debt",
+            historical_cmd="hledger bal --historical",
+            expenses_cmd="hledger bal expenses",
+            income_expenses_cmd="hledger bal inc exp",
+            all_flows_cmd="hledger bal all",
+            daily_expenses_cmd="hledger bal expenses --period daily",
+        )
+        config_manager.save(custom)
+
+        monkeypatch.setenv(ConfigManager.DEV_MODE_ENV_VAR, "1")
+        cfg = config_manager.load()
+
+        assert cfg.filename.endswith("example.journal")
+        assert cfg.commodity == "£"
+        assert cfg.income_regex == ConfigManager.INCOME_REGEX
+        assert cfg.expense_regex == ConfigManager.EXPENSE_REGEX
+        assert cfg.asset_regex == ConfigManager.ASSET_REGEX
+        assert cfg.liability_regex == ConfigManager.LIABILITY_REGEX
+
+    def test_dev_mode_filename_points_to_existing_file(
+        self, config_manager: ConfigManager, monkeypatch: pytest.MonkeyPatch
+    ):
+        monkeypatch.setenv(ConfigManager.DEV_MODE_ENV_VAR, "1")
+        cfg = config_manager.load()
+        assert Path(cfg.filename).exists()
 
 
 class TestReset:
