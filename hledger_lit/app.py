@@ -111,6 +111,13 @@ with st.sidebar:
         help="End date for the report (hledger -e flag)",
     )
 
+    depth = st.number_input(
+        "Account Depth",
+        min_value=1,
+        value=cfg.depth,
+        help="Account depth for the treemap, sankey, and daily expenses charts (hledger --depth flag)",
+    )
+
     col_save, col_reset = st.columns(2)
     with col_save:
         save_btn = st.button(
@@ -150,7 +157,8 @@ with st.sidebar:
     st.subheader("Command Templates")
     st.caption(
         "Available variables: {filename}, {commodity}, {start_date}, {end_date}, "
-        "{income_regex}, {expense_regex}, {asset_regex}, {liability_regex}, {all_accounts}"
+        "{income_regex}, {expense_regex}, {asset_regex}, {liability_regex}, "
+        "{all_accounts}, {depth}"
     )
 
     with st.expander("Historical Balances Command", expanded=False):
@@ -209,6 +217,7 @@ if save_btn:
         income_expenses_cmd=income_expenses_cmd,
         all_flows_cmd=all_flows_cmd,
         daily_expenses_cmd=daily_expenses_cmd,
+        depth=depth,
     )
     path = config_manager.save(new_cfg)
     st.success(f"Configuration saved to {path}")
@@ -238,6 +247,7 @@ cmd_vars: dict[str, object] = {
     "asset_regex": asset_regex,
     "liability_regex": liability_regex,
     "all_accounts": all_accounts,
+    "depth": depth,
 }
 
 # ---------------------------------------------------------------------------
@@ -324,6 +334,7 @@ _config_fingerprint = (
     expense_regex,
     asset_regex,
     liability_regex,
+    depth,
     historical_cmd,
     expenses_cmd,
     income_expenses_cmd,
