@@ -13,7 +13,7 @@ class ChartBuilder:
 
     @staticmethod
     def historical_balances_plot(
-        data: HistoricalData, commodity: str = ""
+        data: HistoricalData, commodity: str = "", period: str = "daily"
     ) -> go.Figure:
         """Line chart of historical balances per account, with a dashed net-worth line."""
         fig = go.Figure()
@@ -43,7 +43,7 @@ class ChartBuilder:
             )
 
         fig.update_layout(
-            title="Historical Account Balances",
+            title=f"Historical Account Balances ({period})",
             xaxis_title="Date",
             yaxis_title=f"Balance ({commodity})",
             yaxis_type="log",
@@ -55,13 +55,14 @@ class ChartBuilder:
 
     @staticmethod
     def expenses_treemap_plot(
-        balances: list[AccountBalance], _commodity: str = ""
+        balances: list[AccountBalance], _commodity: str = "", depth: int | None = None
     ) -> go.Figure:
         """Treemap of expense accounts."""
         labels = [ab.name for ab in balances]
         values = [ab.amount for ab in balances]
         parents = [DataTransformer.parent(ab.name) for ab in balances]
 
+        title = "Expenses Treemap" if depth is None else f"Expenses Treemap (depth {depth})"
         fig = go.Figure(
             go.Treemap(
                 labels=labels,
@@ -72,11 +73,17 @@ class ChartBuilder:
                 root_color="lightgrey",
             )
         )
+        fig.update_layout(title=title)
         return fig
 
     @staticmethod
-    def daily_expenses_plot(data: HistoricalData, commodity: str = "") -> go.Figure:
-        """Stacked bar chart of daily expenses by category."""
+    def daily_expenses_plot(
+        data: HistoricalData,
+        commodity: str = "",
+        period: str = "daily",
+        depth: int | None = None,
+    ) -> go.Figure:
+        """Stacked bar chart of expenses by category, bucketed by period."""
         fig = go.Figure()
 
         # Compute daily totals for percentage calculation
@@ -105,7 +112,7 @@ class ChartBuilder:
 
         fig.update_layout(
             barmode="stack",
-            title="Daily Expenses",
+            title=f"Expenses ({period}, depth {depth})" if depth is not None else f"Expenses ({period})",
             xaxis_title="Date",
             yaxis_title=f"Amount ({commodity})",
             yaxis_tickformat=",.2f",
@@ -115,7 +122,11 @@ class ChartBuilder:
         return fig
 
     @staticmethod
-    def sankey_plot(sankey_data: list[SankeyLink], commodity: str = "") -> go.Figure:
+    def sankey_plot(
+        sankey_data: list[SankeyLink],
+        commodity: str = "",
+        depth: int | None = None,
+    ) -> go.Figure:
         """Sankey diagram from a list of directed links."""
         # Sort by (target, source) to keep related accounts together
         sorted_links = sorted(sankey_data, key=lambda lk: (lk.target, lk.source))
@@ -159,4 +170,6 @@ class ChartBuilder:
                 )
             ]
         )
+        if depth is not None:
+            fig.update_layout(title=f"Depth {depth}")
         return fig

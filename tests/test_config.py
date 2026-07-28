@@ -38,10 +38,6 @@ class TestLoadDefaults:
         assert cfg.asset_regex == ConfigManager.ASSET_REGEX
         assert cfg.liability_regex == ConfigManager.LIABILITY_REGEX
 
-    def test_default_depth(self, config_manager: ConfigManager):
-        cfg = config_manager.load()
-        assert cfg.depth == ConfigManager.DEFAULT_DEPTH
-
 
 # ---------------------------------------------------------------------------
 # save() / load() round-trip
@@ -62,7 +58,6 @@ class TestSaveLoadRoundTrip:
             income_expenses_cmd="hledger bal inc exp",
             all_flows_cmd="hledger bal all",
             daily_expenses_cmd="hledger bal expenses --period daily",
-            depth=7,
         )
 
         config_manager.save(original)
@@ -79,7 +74,6 @@ class TestSaveLoadRoundTrip:
         assert loaded.income_expenses_cmd == original.income_expenses_cmd
         assert loaded.all_flows_cmd == original.all_flows_cmd
         assert loaded.daily_expenses_cmd == original.daily_expenses_cmd
-        assert loaded.depth == original.depth
 
     def test_save_returns_path(self, config_manager: ConfigManager):
         cfg = config_manager.load()
@@ -122,7 +116,6 @@ class TestDevMode:
             income_expenses_cmd="hledger bal inc exp",
             all_flows_cmd="hledger bal all",
             daily_expenses_cmd="hledger bal expenses --period daily",
-            depth=7,
         )
         config_manager.save(custom)
 
@@ -135,7 +128,6 @@ class TestDevMode:
         assert cfg.expense_regex == ConfigManager.EXPENSE_REGEX
         assert cfg.asset_regex == ConfigManager.ASSET_REGEX
         assert cfg.liability_regex == ConfigManager.LIABILITY_REGEX
-        assert cfg.depth == ConfigManager.DEFAULT_DEPTH
 
     def test_dev_mode_filename_points_to_existing_file(
         self, config_manager: ConfigManager, monkeypatch: pytest.MonkeyPatch

@@ -114,8 +114,15 @@ with st.sidebar:
     depth = st.number_input(
         "Account Depth",
         min_value=1,
-        value=cfg.depth,
-        help="Account depth for the treemap, sankey, and daily expenses charts (hledger --depth flag)",
+        value=ConfigManager.DEFAULT_DEPTH,
+        help="Account depth for the treemap, sankey, and expenses charts (hledger --depth flag)",
+    )
+
+    period = st.selectbox(
+        "Report Period",
+        options=ConfigManager.PERIOD_CHOICES,
+        index=ConfigManager.PERIOD_CHOICES.index(ConfigManager.DEFAULT_PERIOD),
+        help="Report interval for the historical balances and expenses charts (hledger --period flag)",
     )
 
     col_save, col_reset = st.columns(2)
@@ -158,7 +165,7 @@ with st.sidebar:
     st.caption(
         "Available variables: {filename}, {commodity}, {start_date}, {end_date}, "
         "{income_regex}, {expense_regex}, {asset_regex}, {liability_regex}, "
-        "{all_accounts}, {depth}"
+        "{all_accounts}, {depth}, {period}"
     )
 
     with st.expander("Historical Balances Command", expanded=False):
@@ -217,7 +224,6 @@ if save_btn:
         income_expenses_cmd=income_expenses_cmd,
         all_flows_cmd=all_flows_cmd,
         daily_expenses_cmd=daily_expenses_cmd,
-        depth=depth,
     )
     path = config_manager.save(new_cfg)
     st.success(f"Configuration saved to {path}")
@@ -248,6 +254,7 @@ cmd_vars: dict[str, object] = {
     "liability_regex": liability_regex,
     "all_accounts": all_accounts,
     "depth": depth,
+    "period": period,
 }
 
 # ---------------------------------------------------------------------------
@@ -268,6 +275,7 @@ chart_specs: list[ChartSpec] = [
                 liability_regex,
             ),
             commodity,
+            period,
         ),
         "💡 Tip: Click legend items to show/hide lines, double-click to isolate a single line",
     ),
@@ -277,6 +285,7 @@ chart_specs: list[ChartSpec] = [
         lambda: charts.expenses_treemap_plot(
             hledger.read_current_balances(expenses_cmd.format(**cmd_vars)),
             commodity,
+            depth,
         ),
         None,
     ),
@@ -292,6 +301,7 @@ chart_specs: list[ChartSpec] = [
                 liability_regex,
             ),
             commodity,
+            depth,
         ),
         None,
     ),
@@ -307,6 +317,7 @@ chart_specs: list[ChartSpec] = [
                 liability_regex,
             ),
             commodity,
+            depth,
         ),
         None,
     ),
@@ -319,8 +330,10 @@ chart_specs: list[ChartSpec] = [
                 commodity,
             ),
             commodity,
+            period,
+            depth,
         ),
-        "💡 Tip: Stacked bar chart of daily spending by expense category (depth 2)",
+        "💡 Tip: Stacked bar chart of spending by expense category, per period",
     ),
 ]
 
@@ -335,6 +348,7 @@ _config_fingerprint = (
     asset_regex,
     liability_regex,
     depth,
+    period,
     historical_cmd,
     expenses_cmd,
     income_expenses_cmd,
