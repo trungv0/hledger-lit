@@ -34,7 +34,7 @@ def display_chart(
     if isinstance(result, Exception):
         st.error(f"Error generating {label}: {result}")
     elif result is not None:
-        st.plotly_chart(result, width="stretch")
+        st.plotly_chart(result, key=key, width="stretch")
 
     st.divider()
 

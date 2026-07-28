@@ -57,6 +57,7 @@ class TestSaveLoadRoundTrip:
             expenses_cmd="hledger bal expenses",
             income_expenses_cmd="hledger bal inc exp",
             all_flows_cmd="hledger bal all",
+            daily_expenses_cmd="hledger bal expenses --period daily",
         )
 
         config_manager.save(original)
@@ -72,6 +73,7 @@ class TestSaveLoadRoundTrip:
         assert loaded.expenses_cmd == original.expenses_cmd
         assert loaded.income_expenses_cmd == original.income_expenses_cmd
         assert loaded.all_flows_cmd == original.all_flows_cmd
+        assert loaded.daily_expenses_cmd == original.daily_expenses_cmd
 
     def test_save_returns_path(self, config_manager: ConfigManager):
         cfg = config_manager.load()
