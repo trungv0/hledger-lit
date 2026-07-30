@@ -45,4 +45,3 @@ class AppConfig:
     income_expenses_cmd: str
     all_flows_cmd: str
     daily_expenses_cmd: str
-    depth: int
