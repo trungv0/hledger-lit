@@ -400,7 +400,7 @@ def _generate_all_charts() -> None:
             for label, key, gen_fn, _tip in chart_specs
         }
         for future in as_completed(futures):
-            label, key = futures[future]
+            _label, key = futures[future]
             try:
                 st.session_state[key] = future.result()
             except (HledgerError, subprocess.CalledProcessError) as exc:

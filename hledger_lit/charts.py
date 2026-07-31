@@ -37,7 +37,7 @@ class ChartBuilder:
                     y=[round(v, 2) for v in data.balances["net_worth"]],
                     mode="lines",
                     name="net_worth",
-                    line=dict(width=3, dash="dash"),
+                    line={"width": 3, "dash": "dash"},
                     hovertemplate=f"%{{y:,.2f}} {commodity}",
                 )
             )
@@ -146,27 +146,30 @@ class ChartBuilder:
         fig = go.Figure(
             data=[
                 go.Sankey(
-                    node=dict(
-                        pad=25,
-                        thickness=20,
-                        line=dict(color="black", width=0.5),
-                        label=nodes,
-                        color="blue",
-                        customdata=[commodity] * len(nodes),
-                        hovertemplate="%{label}<br>%{value:,.2f} %{customdata}<extra></extra>",
-                    ),
-                    link=dict(
-                        source=[nodes.index(lk.source) for lk in sorted_links],
-                        target=[nodes.index(lk.target) for lk in sorted_links],
-                        value=[round(lk.value, 2) for lk in sorted_links],
-                        customdata=[
+                    node={
+                        "pad": 25,
+                        "thickness": 20,
+                        "line": {"color": "black", "width": 0.5},
+                        "label": nodes,
+                        "color": "blue",
+                        "customdata": [commodity] * len(nodes),
+                        "hovertemplate": "%{label}<br>%{value:,.2f} %{customdata}<extra></extra>",
+                    },
+                    link={
+                        "source": [nodes.index(lk.source) for lk in sorted_links],
+                        "target": [nodes.index(lk.target) for lk in sorted_links],
+                        "value": [round(lk.value, 2) for lk in sorted_links],
+                        "customdata": [
                             f"{commodity} ({lk.value / source_totals[lk.source] * 100:.1f}%)"
                             if source_totals.get(lk.source)
                             else commodity
                             for lk in sorted_links
                         ],
-                        hovertemplate="%{source.label} → %{target.label}<br>%{value:,.2f} %{customdata}<extra></extra>",
-                    ),
+                        "hovertemplate": (
+                            "%{source.label} → %{target.label}<br>"
+                            "%{value:,.2f} %{customdata}<extra></extra>"
+                        ),
+                    },
                 )
             ]
         )

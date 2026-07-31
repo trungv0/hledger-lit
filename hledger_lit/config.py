@@ -5,6 +5,7 @@ from __future__ import annotations
 import configparser
 import os
 from pathlib import Path
+from typing import ClassVar
 
 from hledger_lit.models import AppConfig
 
@@ -13,7 +14,7 @@ class ConfigManager:
     """Manages loading, saving, and resetting hledger-lit configuration."""
 
     DEV_MODE_ENV_VAR = "HLEDGER_LIT_DEV"
-    DEV_MODE_TRUE_VALUES = {"1", "true", "yes", "on"}
+    DEV_MODE_TRUE_VALUES: ClassVar[set[str]] = {"1", "true", "yes", "on"}
 
     # Default account-matching regex patterns
     ASSET_REGEX = "assets"
@@ -26,7 +27,7 @@ class ConfigManager:
 
     # Default shared report period for period-based commands (session-only, not persisted)
     DEFAULT_PERIOD = "daily"
-    PERIOD_CHOICES = ["daily", "weekly", "monthly", "quarterly", "yearly"]
+    PERIOD_CHOICES: ClassVar[list[str]] = ["daily", "weekly", "monthly", "quarterly", "yearly"]
 
     # Default comma-separated hledger query filters to exclude from all commands,
     # persisted (edited via the sidebar multiselect + its own save button)

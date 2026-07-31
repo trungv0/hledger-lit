@@ -79,9 +79,13 @@ class HledgerRunner:
 
             # Update net worth: add assets, subtract liabilities
             if asset_pattern.search(account_name):
-                net_worth = [nw + bal for nw, bal in zip(net_worth, account_balances)]
+                net_worth = [
+                    nw + bal for nw, bal in zip(net_worth, account_balances, strict=True)
+                ]
             elif liability_pattern.search(account_name):
-                net_worth = [nw - bal for nw, bal in zip(net_worth, account_balances)]
+                net_worth = [
+                    nw - bal for nw, bal in zip(net_worth, account_balances, strict=True)
+                ]
 
         balances["net_worth"] = net_worth
         return HistoricalData(dates=dates, balances=balances)
