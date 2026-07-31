@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import plotly.graph_objects as go
 
-from hledger_lit.models import AccountBalance, HistoricalData, SankeyLink
 from hledger_lit.charts import ChartBuilder
-
+from hledger_lit.models import AccountBalance, HistoricalData, SankeyLink
 
 # ---------------------------------------------------------------------------
 # historical_balances_plot()

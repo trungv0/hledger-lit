@@ -7,7 +7,6 @@ import pytest
 from hledger_lit.models import AccountBalance
 from hledger_lit.transforms import DataTransformer, MissingParentAccountError
 
-
 # ---------------------------------------------------------------------------
 # parent()
 # ---------------------------------------------------------------------------

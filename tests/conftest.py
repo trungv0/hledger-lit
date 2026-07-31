@@ -6,7 +6,6 @@ import pytest
 
 from hledger_lit.models import AccountBalance, HistoricalData, SankeyLink
 
-
 # ---------------------------------------------------------------------------
 # Raw hledger JSON fixtures
 # ---------------------------------------------------------------------------
