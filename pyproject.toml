@@ -10,6 +10,9 @@ dependencies = ["plotly", "streamlit"]
 [project.optional-dependencies]
 dev = ["pytest", "ruff"]
 
+[tool.uv]
+exclude-newer = "7 days"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
