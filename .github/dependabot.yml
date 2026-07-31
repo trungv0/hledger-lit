@@ -5,10 +5,10 @@ updates:
     schedule:
       interval: "weekly"
     cooldown:
-      default-days: 3
+      default-days: 7
       semver-patch-days: 1
       semver-minor-days: 3
-      semver-major-days: 7
+      semver-major-days: 30
     groups:
       python-patch-minor:
         update-types:
@@ -22,10 +22,10 @@ updates:
     schedule:
       interval: "weekly"
     cooldown:
-      default-days: 3
+      default-days: 7
       semver-patch-days: 1
       semver-minor-days: 3
-      semver-major-days: 7
+      semver-major-days: 30
     groups:
       github-actions:
         patterns:
