@@ -88,6 +88,28 @@ class TestExtractPeriodBalances:
 
 
 # ---------------------------------------------------------------------------
+# extract_amount()
+# ---------------------------------------------------------------------------
+
+
+class TestExtractAmount:
+    def test_matching_commodity(self):
+        amounts = [{"acommodity": "£", "aquantity": {"floatingPoint": 100.0}}]
+        assert DataTransformer.extract_amount(amounts, "£") == 100.0
+
+    def test_missing_commodity_returns_zero(self):
+        amounts = [{"acommodity": "$", "aquantity": {"floatingPoint": 100.0}}]
+        assert DataTransformer.extract_amount(amounts, "£") == 0.0
+
+    def test_sign_is_preserved(self):
+        amounts = [{"acommodity": "£", "aquantity": {"floatingPoint": -500.0}}]
+        assert DataTransformer.extract_amount(amounts, "£") == -500.0
+
+    def test_empty_list_returns_zero(self):
+        assert DataTransformer.extract_amount([], "£") == 0.0
+
+
+# ---------------------------------------------------------------------------
 # to_sankey_data()
 # ---------------------------------------------------------------------------
 

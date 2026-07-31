@@ -8,7 +8,6 @@ import json
 import subprocess
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import date
 
 import plotly.graph_objects as go
 import streamlit as st
@@ -17,6 +16,7 @@ from hledger_lit.charts import ChartBuilder
 from hledger_lit.config import ConfigManager
 from hledger_lit.hledger import HledgerError, HledgerRunner
 from hledger_lit.models import AppConfig
+from hledger_lit.sidebar import render_core_filters
 from hledger_lit.transforms import DataTransformer
 
 
@@ -68,55 +68,13 @@ with st.sidebar:
             "🧪 Dev mode active — using example.journal, config not persisted"
         )
 
-    filename = st.text_input(
-        "HLedger Journal File Path",
-        value=cfg.filename,
-        help="Path to your hledger journal file, defaults to $LEDGER_FILE",
-    )
-
-    try:
-        commodities = hledger.get_commodities(filename)
-    except Exception:
-        commodities = []
-    if cfg.commodity and cfg.commodity not in commodities:
-        commodities.insert(0, cfg.commodity)
-    if commodities:
-        default_index = (
-            commodities.index(cfg.commodity) if cfg.commodity in commodities else 0
-        )
-        commodity = st.selectbox(
-            "Commodity",
-            options=commodities,
-            index=default_index,
-            help="Commodity to convert all values to (via -value=then,{commodity})",
-        )
-    else:
-        commodity = st.text_input(
-            "Commodity",
-            value=cfg.commodity,
-            help="Commodity to convert all values to (via -value=then,{commodity})",
-        )
-
-    # Date range
-    current_year = date.today().year
-    default_start = date(2021, 1, 1) if dev_mode else date(current_year, 1, 1)
-    default_end = date(2021, 12, 31) if dev_mode else date.today()
-    start_date = st.date_input(
-        "Start Date",
-        value=default_start,
-        help="Beginning date for the report (hledger -b flag)",
-    )
-    end_date = st.date_input(
-        "End Date",
-        value=default_end,
-        help="End date for the report (hledger -e flag)",
-    )
-
-    depth = st.number_input(
-        "Account Depth",
-        min_value=1,
-        value=ConfigManager.DEFAULT_DEPTH,
-        help="Account depth for the treemap, sankey, and expenses charts (hledger --depth flag)",
+    core = render_core_filters(cfg, hledger, dev_mode)
+    filename, commodity, start_date, end_date, depth = (
+        core.filename,
+        core.commodity,
+        core.start_date,
+        core.end_date,
+        core.depth,
     )
 
     period = st.selectbox(

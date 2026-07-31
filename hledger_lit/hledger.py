@@ -7,7 +7,7 @@ import shlex
 import subprocess
 from typing import Any
 
-from hledger_lit.models import AccountBalance, HistoricalData
+from hledger_lit.models import AccountBalance, HistoricalData, Posting
 from hledger_lit.transforms import DataTransformer
 
 
@@ -129,3 +129,33 @@ class HledgerRunner:
             results.append(AccountBalance(name=account_name, amount=balance))
 
         return results
+
+    def read_register(self, command: str, commodity: str) -> list[Posting]:
+        """Execute a register command and return one row per posting."""
+        rows = self.run_command(command)
+
+        postings: list[Posting] = []
+        last_date, last_description = "", ""
+        for date, _date2, description, posting, running_total in rows:
+            if date is not None:
+                last_date = date
+            if description is not None:
+                last_description = description
+
+            postings.append(
+                Posting(
+                    date=last_date,
+                    description=last_description,
+                    account=posting["paccount"],
+                    amount=DataTransformer.extract_amount(
+                        posting["pamount"], commodity
+                    ),
+                    running_total=DataTransformer.extract_amount(
+                        running_total, commodity
+                    ),
+                    status=posting["pstatus"],
+                    comment=posting.get("pcomment", ""),
+                    tags=[tuple(t) for t in posting.get("ptags", [])],
+                )
+            )
+        return postings

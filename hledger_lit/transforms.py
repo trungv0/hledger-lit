@@ -54,6 +54,14 @@ class DataTransformer:
             result.append(balance)
         return result
 
+    @staticmethod
+    def extract_amount(amounts: list[dict[str, Any]], commodity: str) -> float:
+        """Extract the signed amount for *commodity* from a posting's amount list."""
+        for amount in amounts:
+            if amount["acommodity"] == commodity:
+                return amount["aquantity"]["floatingPoint"]
+        return 0.0
+
     @classmethod
     def to_sankey_data(
         cls,

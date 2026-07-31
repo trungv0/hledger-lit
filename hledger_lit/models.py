@@ -31,6 +31,20 @@ class AccountBalance:
 
 
 @dataclass
+class Posting:
+    """A single posting line from ``hledger register``, with running total."""
+
+    date: str
+    description: str
+    account: str
+    amount: float
+    running_total: float
+    status: str
+    comment: str
+    tags: list[tuple[str, str]]
+
+
+@dataclass
 class AppConfig:
     """All user-configurable settings, persisted to the INI file."""
 

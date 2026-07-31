@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from hledger_lit.models import AccountBalance, HistoricalData, SankeyLink
+from hledger_lit.models import AccountBalance, HistoricalData, Posting, SankeyLink
 
 # ---------------------------------------------------------------------------
 # Raw hledger JSON fixtures
@@ -106,6 +106,59 @@ def current_balance_json() -> list:
     ]
 
 
+@pytest.fixture()
+def register_json() -> list:
+    """Register report JSON (``hledger register -O json``).
+
+    Rows are ``[date, date2, description, posting, running_total]``. A
+    transaction's second and later postings have ``null`` date/date2/description.
+    """
+    return [
+        [
+            "2024-01-01",
+            None,
+            "Opening Balances",
+            {
+                "paccount": "assets:bank",
+                "pamount": [{"acommodity": "£", "aquantity": {"floatingPoint": 1200.0}}],
+                "pcomment": "",
+                "pstatus": "Unmarked",
+                "ptags": [["type", "A"]],
+                "ptransaction_": "1",
+            },
+            [{"acommodity": "£", "aquantity": {"floatingPoint": 1200.0}}],
+        ],
+        [
+            None,
+            None,
+            None,
+            {
+                "paccount": "equity:opening balance",
+                "pamount": [{"acommodity": "£", "aquantity": {"floatingPoint": -1200.0}}],
+                "pcomment": "",
+                "pstatus": "Unmarked",
+                "ptags": [],
+                "ptransaction_": "1",
+            },
+            [{"acommodity": "£", "aquantity": {"floatingPoint": 0.0}}],
+        ],
+        [
+            "2024-01-05",
+            None,
+            "Groceries",
+            {
+                "paccount": "expenses:food",
+                "pamount": [{"acommodity": "£", "aquantity": {"floatingPoint": 50.0}}],
+                "pcomment": "weekly shop",
+                "pstatus": "Cleared",
+                "ptags": [],
+                "ptransaction_": "2",
+            },
+            [{"acommodity": "£", "aquantity": {"floatingPoint": 50.0}}],
+        ],
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Pre-parsed model fixtures
 # ---------------------------------------------------------------------------
@@ -137,6 +190,43 @@ def account_balances() -> list[AccountBalance]:
         AccountBalance(name="income", amount=-2000.0),
         AccountBalance(name="income:salary", amount=-1800.0),
         AccountBalance(name="income:interest", amount=-200.0),
+    ]
+
+
+@pytest.fixture()
+def register_postings() -> list[Posting]:
+    """Pre-parsed postings matching ``register_json``."""
+    return [
+        Posting(
+            date="2024-01-01",
+            description="Opening Balances",
+            account="assets:bank",
+            amount=1200.0,
+            running_total=1200.0,
+            status="Unmarked",
+            comment="",
+            tags=[("type", "A")],
+        ),
+        Posting(
+            date="2024-01-01",
+            description="Opening Balances",
+            account="equity:opening balance",
+            amount=-1200.0,
+            running_total=0.0,
+            status="Unmarked",
+            comment="",
+            tags=[],
+        ),
+        Posting(
+            date="2024-01-05",
+            description="Groceries",
+            account="expenses:food",
+            amount=50.0,
+            running_total=50.0,
+            status="Cleared",
+            comment="weekly shop",
+            tags=[],
+        ),
     ]
 
 

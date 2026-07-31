@@ -65,6 +65,14 @@ class ConfigManager:
         "-b {start_date} -e {end_date}"
     )
 
+    # Fixed (non-persisted) command template for the register/spot-check page
+    DEFAULT_REGISTER_CMD = (
+        "hledger -f {filename} register {query} "
+        "--value=then,{commodity} --infer-value "
+        "--depth {depth} -O json "
+        "-b {start_date} -e {end_date}"
+    )
+
     def __init__(self) -> None:
         self._config_path = self._resolve_config_path()
 

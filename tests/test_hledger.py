@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from hledger_lit.hledger import HledgerError, HledgerRunner
-from hledger_lit.models import AccountBalance, HistoricalData
+from hledger_lit.models import AccountBalance, HistoricalData, Posting
 
 
 @pytest.fixture()
@@ -111,3 +111,52 @@ class TestReadCurrentBalances:
         assert by_name["expenses"] == 800.0
         assert by_name["expenses:food"] == 300.0
         assert by_name["income"] == -2000.0
+
+
+# ---------------------------------------------------------------------------
+# read_register()
+# ---------------------------------------------------------------------------
+
+
+class TestReadRegister:
+    def test_returns_posting_list(self, runner: HledgerRunner, register_json: list):
+        with patch.object(runner, "run_command", return_value=register_json):
+            result = runner.read_register("hledger register -O json", "£")
+
+        assert all(isinstance(p, Posting) for p in result)
+        assert len(result) == 3
+
+    def test_forward_fills_date_and_description(
+        self, runner: HledgerRunner, register_json: list
+    ):
+        with patch.object(runner, "run_command", return_value=register_json):
+            result = runner.read_register("hledger register -O json", "£")
+
+        # Second posting has null date/description in the JSON, forward-filled here
+        assert result[1].date == "2024-01-01"
+        assert result[1].description == "Opening Balances"
+
+    def test_amount_and_running_total_are_signed(
+        self, runner: HledgerRunner, register_json: list
+    ):
+        with patch.object(runner, "run_command", return_value=register_json):
+            result = runner.read_register("hledger register -O json", "£")
+
+        assert result[1].amount == -1200.0
+        assert result[1].running_total == 0.0
+
+    def test_missing_commodity_defaults_to_zero(
+        self, runner: HledgerRunner, register_json: list
+    ):
+        with patch.object(runner, "run_command", return_value=register_json):
+            result = runner.read_register("hledger register -O json", "$")
+
+        assert all(p.amount == 0.0 for p in result)
+        assert all(p.running_total == 0.0 for p in result)
+
+    def test_tags_are_tuples(self, runner: HledgerRunner, register_json: list):
+        with patch.object(runner, "run_command", return_value=register_json):
+            result = runner.read_register("hledger register -O json", "£")
+
+        assert result[0].tags == [("type", "A")]
+        assert result[1].tags == []
