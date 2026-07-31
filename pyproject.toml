@@ -8,10 +8,17 @@ requires-python = ">=3.10"
 dependencies = ["plotly", "streamlit"]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "ruff"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
 include = ["hledger_lit*"]
+
+[tool.ruff]
+line-length = 120
+extend-exclude = ["main.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
