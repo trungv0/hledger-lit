@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import html
 import json
 import subprocess
@@ -125,6 +126,25 @@ with st.sidebar:
         help="Report interval for the historical balances and expenses charts (hledger --period flag)",
     )
 
+    exclude_filter_catalog = [
+        f.strip() for f in cfg.exclude_filter_options.split(",") if f.strip()
+    ]
+    excluded_filters = st.multiselect(
+        "Excluded Query Filters",
+        options=exclude_filter_catalog,
+        default=exclude_filter_catalog,
+        accept_new_options=True,
+        help=(
+            "Selected filters are excluded from all reports (each becomes "
+            "not:<filter> in the underlying hledger command). Typing a new "
+            "filter here uses it for this session only — click 'Save Excluded "
+            "Filters' to keep the current selection permanently."
+        ),
+    )
+    save_excluded_filters_btn = st.button(
+        "Save Excluded Filters", use_container_width=True, disabled=dev_mode
+    )
+
     col_save, col_reset = st.columns(2)
     with col_save:
         save_btn = st.button(
@@ -165,7 +185,7 @@ with st.sidebar:
     st.caption(
         "Available variables: {filename}, {commodity}, {start_date}, {end_date}, "
         "{income_regex}, {expense_regex}, {asset_regex}, {liability_regex}, "
-        "{all_accounts}, {depth}, {period}"
+        "{all_accounts}, {depth}, {period}, {exclude_filters}"
     )
 
     with st.expander("Historical Balances Command", expanded=False):
@@ -224,9 +244,15 @@ if save_btn:
         income_expenses_cmd=income_expenses_cmd,
         all_flows_cmd=all_flows_cmd,
         daily_expenses_cmd=daily_expenses_cmd,
+        exclude_filter_options=cfg.exclude_filter_options,
     )
     path = config_manager.save(new_cfg)
     st.success(f"Configuration saved to {path}")
+
+if save_excluded_filters_btn:
+    new_cfg = dataclasses.replace(cfg, exclude_filter_options=",".join(excluded_filters))
+    path = config_manager.save(new_cfg)
+    st.success(f"Excluded filters saved to {path}")
 
 if reset_btn:
     config_manager.reset()
@@ -243,6 +269,7 @@ if not filename:
 # Template variables shared by all commands
 # ---------------------------------------------------------------------------
 all_accounts = f"{income_regex} {expense_regex} {asset_regex} {liability_regex}"
+exclude_filters = " ".join(f"not:{f}" for f in excluded_filters)
 cmd_vars: dict[str, object] = {
     "filename": filename,
     "commodity": commodity,
@@ -255,6 +282,7 @@ cmd_vars: dict[str, object] = {
     "all_accounts": all_accounts,
     "depth": depth,
     "period": period,
+    "exclude_filters": exclude_filters,
 }
 
 # ---------------------------------------------------------------------------
@@ -349,6 +377,7 @@ _config_fingerprint = (
     liability_regex,
     depth,
     period,
+    tuple(sorted(excluded_filters)),
     historical_cmd,
     expenses_cmd,
     income_expenses_cmd,
