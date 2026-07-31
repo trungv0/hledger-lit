@@ -135,10 +135,8 @@ with st.sidebar:
         default=exclude_filter_catalog,
         accept_new_options=True,
         help=(
-            "Selected filters are excluded from all reports (each becomes "
-            "not:<filter> in the underlying hledger command). Typing a new "
-            "filter here uses it for this session only — click 'Save Excluded "
-            "Filters' to keep the current selection permanently."
+            "Selected filters are excluded from all reports for the current session. "
+            "Click 'Save Excluded Filters' to keep the current selection permanently."
         ),
     )
     save_excluded_filters_btn = st.button(
