@@ -49,3 +49,8 @@ Requires: Python ≥ 3.10, `hledger` CLI on PATH. No test suite exists yet.
 - All hledger output is expected as JSON (`-O json`) with specific keys like `prDates`/`prRows`
 - `main.py` at the root is legacy/deprecated — `app.py` is the active entry point
 - Invalid regex from user input raises `ValueError` — always validate patterns before compiling
+
+## Guardrails
+
+- Use feature branches, never develop directly on `master` branch
+- Use journal files within the repo if needed for testing, do not automatically read external journal files
