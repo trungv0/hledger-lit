@@ -28,33 +28,37 @@ class ConfigManager:
     DEFAULT_PERIOD = "daily"
     PERIOD_CHOICES = ["daily", "weekly", "monthly", "quarterly", "yearly"]
 
+    # Default comma-separated hledger query filters to exclude from all commands,
+    # persisted (edited via the sidebar multiselect + its own save button)
+    DEFAULT_EXCLUDE_FILTER_OPTIONS = "tag:clopen"
+
     # Default hledger command templates
     DEFAULT_HISTORICAL_CMD = (
-        "hledger -f {filename} balance {all_accounts} not:tag:clopen "
+        "hledger -f {filename} balance {all_accounts} {exclude_filters} "
         "--depth 1 --period {period} --historical "
         "--value=then,{commodity} --infer-value -O json "
         "-b {start_date} -e {end_date}"
     )
     DEFAULT_EXPENSES_CMD = (
-        "hledger -f {filename} balance {expense_regex} not:tag:clopen "
+        "hledger -f {filename} balance {expense_regex} {exclude_filters} "
         "--cost --value=then,{commodity} --infer-value "
         "--no-total --tree --no-elide --depth {depth} -O json "
         "-b {start_date} -e {end_date}"
     )
     DEFAULT_INCOME_EXPENSES_CMD = (
-        "hledger -f {filename} balance {income_regex} {expense_regex} not:tag:clopen "
+        "hledger -f {filename} balance {income_regex} {expense_regex} {exclude_filters} "
         "--cost --value=then,{commodity} --infer-value "
         "--no-total --tree --no-elide --depth {depth} -O json "
         "-b {start_date} -e {end_date}"
     )
     DEFAULT_ALL_FLOWS_CMD = (
-        "hledger -f {filename} balance {all_accounts} not:tag:clopen "
+        "hledger -f {filename} balance {all_accounts} {exclude_filters} "
         "--cost --value=then,{commodity} --infer-value "
         "--no-total --tree --no-elide --depth {depth} -O json "
         "-b {start_date} -e {end_date}"
     )
     DEFAULT_DAILY_EXPENSES_CMD = (
-        "hledger -f {filename} balance {expense_regex} not:tag:clopen "
+        "hledger -f {filename} balance {expense_regex} {exclude_filters} "
         "--period {period} --depth {depth} "
         "--cost --value=then,{commodity} --infer-value -O json "
         "-b {start_date} -e {end_date}"
@@ -125,6 +129,7 @@ class ConfigManager:
                 income_expenses_cmd=self.DEFAULT_INCOME_EXPENSES_CMD,
                 all_flows_cmd=self.DEFAULT_ALL_FLOWS_CMD,
                 daily_expenses_cmd=self.DEFAULT_DAILY_EXPENSES_CMD,
+                exclude_filter_options=self.DEFAULT_EXCLUDE_FILTER_OPTIONS,
             )
 
         ini = self._read_ini()
@@ -152,6 +157,12 @@ class ConfigManager:
             daily_expenses_cmd=self._get(
                 ini, "commands", "daily_expenses", self.DEFAULT_DAILY_EXPENSES_CMD
             ),
+            exclude_filter_options=self._get(
+                ini,
+                "settings",
+                "exclude_filter_options",
+                self.DEFAULT_EXCLUDE_FILTER_OPTIONS,
+            ),
         )
 
     def save(self, cfg: AppConfig) -> Path:
@@ -161,6 +172,7 @@ class ConfigManager:
         ini["settings"] = {
             "filename": cfg.filename,
             "commodity": cfg.commodity,
+            "exclude_filter_options": cfg.exclude_filter_options,
         }
         ini["regex"] = {
             "income": cfg.income_regex,

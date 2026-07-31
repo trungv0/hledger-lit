@@ -38,6 +38,10 @@ class TestLoadDefaults:
         assert cfg.asset_regex == ConfigManager.ASSET_REGEX
         assert cfg.liability_regex == ConfigManager.LIABILITY_REGEX
 
+    def test_default_exclude_filter_options(self, config_manager: ConfigManager):
+        cfg = config_manager.load()
+        assert cfg.exclude_filter_options == ConfigManager.DEFAULT_EXCLUDE_FILTER_OPTIONS
+
 
 # ---------------------------------------------------------------------------
 # save() / load() round-trip
@@ -58,6 +62,7 @@ class TestSaveLoadRoundTrip:
             income_expenses_cmd="hledger bal inc exp",
             all_flows_cmd="hledger bal all",
             daily_expenses_cmd="hledger bal expenses --period daily",
+            exclude_filter_options="tag:clopen,tag:test",
         )
 
         config_manager.save(original)
@@ -74,6 +79,7 @@ class TestSaveLoadRoundTrip:
         assert loaded.income_expenses_cmd == original.income_expenses_cmd
         assert loaded.all_flows_cmd == original.all_flows_cmd
         assert loaded.daily_expenses_cmd == original.daily_expenses_cmd
+        assert loaded.exclude_filter_options == original.exclude_filter_options
 
     def test_save_returns_path(self, config_manager: ConfigManager):
         cfg = config_manager.load()
@@ -116,6 +122,7 @@ class TestDevMode:
             income_expenses_cmd="hledger bal inc exp",
             all_flows_cmd="hledger bal all",
             daily_expenses_cmd="hledger bal expenses --period daily",
+            exclude_filter_options="tag:clopen,tag:test",
         )
         config_manager.save(custom)
 
@@ -128,6 +135,7 @@ class TestDevMode:
         assert cfg.expense_regex == ConfigManager.EXPENSE_REGEX
         assert cfg.asset_regex == ConfigManager.ASSET_REGEX
         assert cfg.liability_regex == ConfigManager.LIABILITY_REGEX
+        assert cfg.exclude_filter_options == ConfigManager.DEFAULT_EXCLUDE_FILTER_OPTIONS
 
     def test_dev_mode_filename_points_to_existing_file(
         self, config_manager: ConfigManager, monkeypatch: pytest.MonkeyPatch
@@ -135,6 +143,26 @@ class TestDevMode:
         monkeypatch.setenv(ConfigManager.DEV_MODE_ENV_VAR, "1")
         cfg = config_manager.load()
         assert Path(cfg.filename).exists()
+
+
+class TestExcludeFilters:
+    def test_default_exclude_filter_options(self):
+        assert ConfigManager.DEFAULT_EXCLUDE_FILTER_OPTIONS == "tag:clopen"
+
+    @pytest.mark.parametrize(
+        "template_name",
+        [
+            "DEFAULT_HISTORICAL_CMD",
+            "DEFAULT_EXPENSES_CMD",
+            "DEFAULT_INCOME_EXPENSES_CMD",
+            "DEFAULT_ALL_FLOWS_CMD",
+            "DEFAULT_DAILY_EXPENSES_CMD",
+        ],
+    )
+    def test_templates_use_placeholder_not_literal(self, template_name: str):
+        template = getattr(ConfigManager, template_name)
+        assert "{exclude_filters}" in template
+        assert "not:tag:clopen" not in template
 
 
 class TestReset:
