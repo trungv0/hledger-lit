@@ -35,7 +35,7 @@ def display_chart(
     if isinstance(result, Exception):
         st.error(f"Error generating {label}: {result}")
     elif result is not None:
-        st.plotly_chart(result, key=key, width="stretch")
+        st.plotly_chart(result, key=session_key, width="stretch")
 
     st.divider()
 
@@ -98,17 +98,17 @@ with st.sidebar:
         ),
     )
     save_excluded_filters_btn = st.button(
-        "Save Excluded Filters", use_container_width=True, disabled=dev_mode
+        "Save Excluded Filters", width="stretch", disabled=dev_mode
     )
 
     col_save, col_reset = st.columns(2)
     with col_save:
         save_btn = st.button(
-            "Save Config", use_container_width=True, disabled=dev_mode
+            "Save Config", width="stretch", disabled=dev_mode
         )
     with col_reset:
         reset_btn = st.button(
-            "Reset to Defaults", use_container_width=True, disabled=dev_mode
+            "Reset to Defaults", width="stretch", disabled=dev_mode
         )
 
     # ---- Account Regex Patterns ----
@@ -345,7 +345,7 @@ _config_changed = st.session_state.get("_config_fingerprint") != _config_fingerp
 render_btn = st.button(
     "Render" if not _config_changed else "Render  :material/autorenew:",
     type="primary",
-    use_container_width=True,
+    width="stretch",
 )
 _should_render = render_btn or _config_changed
 
@@ -408,7 +408,7 @@ def _download_report() -> None:
         mime="text/html",
         icon=":material/download:",
         disabled=not figures,
-        use_container_width=True,
+        width="stretch",
     )
 
 
