@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from hledger_lit.models import AccountBalance, SankeyLink
+from hledger_lit.models import AccountBalance, Posting, SankeyLink
 
 
 class MissingParentAccountError(Exception):
@@ -126,3 +126,45 @@ class DataTransformer:
             )
 
         return sankey_data
+
+    @classmethod
+    def group_postings_by_top_level_account(
+        cls, postings: list[Posting]
+    ) -> dict[str, list[AccountBalance]]:
+        """Group register postings by top-level account hierarchy.
+
+        For each posting, computes cumulative balance totals for all prefix account
+        paths (e.g. ``expenses:food:groceries`` updates ``expenses``, ``expenses:food``,
+        and ``expenses:food:groceries``).
+
+        Returns a dictionary mapping each top-level account name (e.g. ``"expenses"``)
+        to a list of :class:`AccountBalance` objects representing that account tree.
+        """
+        if not postings:
+            return {}
+
+        totals: dict[str, float] = {}
+
+        for p in postings:
+            account = p.account
+            if not account:
+                continue
+            parts = account.split(":")
+            for i in range(1, len(parts) + 1):
+                prefix = ":".join(parts[:i])
+                totals[prefix] = totals.get(prefix, 0.0) + p.amount
+
+        grouped: dict[str, list[AccountBalance]] = {}
+        for acc_name, total in totals.items():
+            top_level = acc_name.split(":")[0]
+            if top_level not in grouped:
+                grouped[top_level] = []
+            grouped[top_level].append(
+                AccountBalance(name=acc_name, amount=abs(round(total, 2)))
+            )
+
+        for top_level in grouped:
+            grouped[top_level].sort(key=lambda ab: ab.name)
+
+        return grouped
+

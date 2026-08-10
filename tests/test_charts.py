@@ -66,6 +66,32 @@ class TestExpensesTreemapPlot:
 
 
 # ---------------------------------------------------------------------------
+# account_treemap_plot()
+# ---------------------------------------------------------------------------
+
+
+class TestAccountTreemapPlot:
+    def test_returns_figure(self):
+        balances = [
+            AccountBalance(name="assets", amount=1000.0),
+            AccountBalance(name="assets:bank", amount=1000.0),
+        ]
+        fig = ChartBuilder.account_treemap_plot(balances, title="Assets Treemap")
+        assert isinstance(fig, go.Figure)
+
+    def test_labels_and_parents(self):
+        balances = [
+            AccountBalance(name="assets", amount=1000.0),
+            AccountBalance(name="assets:bank", amount=1000.0),
+        ]
+        fig = ChartBuilder.account_treemap_plot(balances, title="Assets Treemap")
+        treemap_trace = fig.data[0]
+        assert list(treemap_trace.labels) == ["assets", "assets:bank"]
+        assert list(treemap_trace.parents) == ["", "assets"]
+
+
+
+# ---------------------------------------------------------------------------
 # sankey_plot()
 # ---------------------------------------------------------------------------
 

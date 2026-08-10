@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from hledger_lit.models import AccountBalance
+from hledger_lit.models import AccountBalance, Posting
 from hledger_lit.transforms import DataTransformer, MissingParentAccountError
 
 # ---------------------------------------------------------------------------
@@ -161,3 +161,61 @@ class TestToSankeyData:
         links = DataTransformer.to_sankey_data(account_balances)
         for lk in links:
             assert lk.value >= 0
+
+
+# ---------------------------------------------------------------------------
+# group_postings_by_top_level_account()
+# ---------------------------------------------------------------------------
+
+
+class TestGroupPostingsByTopLevelAccount:
+    def test_empty_postings(self):
+        assert DataTransformer.group_postings_by_top_level_account([]) == {}
+
+    def test_grouping_by_top_level(self):
+        postings = [
+            Posting(
+                date="2021-01-01",
+                description="Groceries",
+                account="expenses:food:groceries",
+                amount=50.0,
+                running_total=50.0,
+                status="",
+                comment="",
+                tags=[],
+            ),
+            Posting(
+                date="2021-01-02",
+                description="Restaurant",
+                account="expenses:food:restaurants",
+                amount=30.0,
+                running_total=80.0,
+                status="",
+                comment="",
+                tags=[],
+            ),
+            Posting(
+                date="2021-01-03",
+                description="Salary",
+                account="income:salary",
+                amount=-1000.0,
+                running_total=-920.0,
+                status="",
+                comment="",
+                tags=[],
+            ),
+        ]
+        grouped = DataTransformer.group_postings_by_top_level_account(postings)
+
+        assert set(grouped.keys()) == {"expenses", "income"}
+
+        expenses = {ab.name: ab.amount for ab in grouped["expenses"]}
+        assert expenses["expenses"] == 80.0
+        assert expenses["expenses:food"] == 80.0
+        assert expenses["expenses:food:groceries"] == 50.0
+        assert expenses["expenses:food:restaurants"] == 30.0
+
+        income = {ab.name: ab.amount for ab in grouped["income"]}
+        assert income["income"] == 1000.0
+        assert income["income:salary"] == 1000.0
+

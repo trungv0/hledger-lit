@@ -54,15 +54,17 @@ class ChartBuilder:
         return fig
 
     @staticmethod
-    def expenses_treemap_plot(
-        balances: list[AccountBalance], _commodity: str = "", depth: int | None = None
+    def account_treemap_plot(
+        balances: list[AccountBalance],
+        title: str = "Account Treemap",
+        commodity: str = "",
+        depth: int | None = None,
     ) -> go.Figure:
-        """Treemap of expense accounts."""
+        """Treemap for an arbitrary account hierarchy."""
         labels = [ab.name for ab in balances]
         values = [ab.amount for ab in balances]
         parents = [DataTransformer.parent(ab.name) for ab in balances]
 
-        title = "Expenses Treemap" if depth is None else f"Expenses Treemap (depth {depth})"
         fig = go.Figure(
             go.Treemap(
                 labels=labels,
@@ -75,6 +77,17 @@ class ChartBuilder:
         )
         fig.update_layout(title=title)
         return fig
+
+    @classmethod
+    def expenses_treemap_plot(
+        cls, balances: list[AccountBalance], commodity: str = "", depth: int | None = None
+    ) -> go.Figure:
+        """Treemap of expense accounts."""
+        title = "Expenses Treemap" if depth is None else f"Expenses Treemap (depth {depth})"
+        return cls.account_treemap_plot(
+            balances, title=title, commodity=commodity, depth=depth
+        )
+
 
     @staticmethod
     def daily_expenses_plot(
