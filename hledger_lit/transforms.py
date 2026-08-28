@@ -62,6 +62,42 @@ class DataTransformer:
                 return amount["aquantity"]["floatingPoint"]
         return 0.0
 
+    @staticmethod
+    def sum_positive_contributions(balances: list[AccountBalance]) -> list[AccountBalance]:
+        """Rebuild each account's amount as the sum of its positive contributions.
+
+        Plotly's Treemap can't render a negative-valued box, and hledger's raw
+        subtree totals can go negative when a contra-expense (e.g. a refund)
+        outweighs spend — for a single leaf, or for an entire branch net
+        negative. Netting the refund into ancestor totals (or into a sibling)
+        would inflate whichever account absorbs it, so instead each account's
+        own direct contribution (its raw total minus its children's raw
+        totals) is dropped when negative, and every total is rebuilt bottom-up
+        from these clamped contributions. This keeps ``branchvalues="total"``
+        consistent (parent == own contribution + sum of children) without
+        inflating anything — refunds are excluded from the chart rather than
+        netted.
+        """
+        children: dict[str, list[str]] = {}
+        for ab in balances:
+            children.setdefault(DataTransformer.parent(ab.name), []).append(ab.name)
+
+        raw = {ab.name: ab.amount for ab in balances}
+        gross: dict[str, float] = {}
+
+        def resolve(name: str) -> float:
+            if name not in gross:
+                kids = children.get(name, [])
+                own_contribution = raw[name] - sum(raw[child] for child in kids)
+                gross[name] = max(0.0, own_contribution) + sum(
+                    resolve(child) for child in kids
+                )
+            return gross[name]
+
+        return [
+            AccountBalance(name=ab.name, amount=resolve(ab.name)) for ab in balances
+        ]
+
     @classmethod
     def to_sankey_data(
         cls,

@@ -58,6 +58,7 @@ class ChartBuilder:
         balances: list[AccountBalance], _commodity: str = "", depth: int | None = None
     ) -> go.Figure:
         """Treemap of expense accounts."""
+        balances = DataTransformer.sum_positive_contributions(balances)
         labels = [ab.name for ab in balances]
         values = [ab.amount for ab in balances]
         parents = [DataTransformer.parent(ab.name) for ab in balances]

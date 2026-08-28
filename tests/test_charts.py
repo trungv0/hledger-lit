@@ -64,6 +64,20 @@ class TestExpensesTreemapPlot:
             "expenses:rent",
         ]
 
+    def test_negative_leaf_does_not_produce_negative_values(self):
+        """A refund (contra-expense) nets an account negative; Plotly can't
+        render a negative-valued box, so values must all stay non-negative."""
+        balances = [
+            AccountBalance(name="expenses", amount=650.0),
+            AccountBalance(name="expenses:food", amount=150.0),
+            AccountBalance(name="expenses:food:groceries", amount=200.0),
+            AccountBalance(name="expenses:food:dining", amount=-50.0),
+            AccountBalance(name="expenses:rent", amount=500.0),
+        ]
+        fig = ChartBuilder.expenses_treemap_plot(balances)
+        treemap_trace = fig.data[0]
+        assert all(v >= 0 for v in treemap_trace.values)
+
 
 # ---------------------------------------------------------------------------
 # sankey_plot()
