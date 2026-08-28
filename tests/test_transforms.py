@@ -161,3 +161,88 @@ class TestToSankeyData:
         links = DataTransformer.to_sankey_data(account_balances)
         for lk in links:
             assert lk.value >= 0
+
+
+# ---------------------------------------------------------------------------
+# sum_positive_contributions()
+# ---------------------------------------------------------------------------
+
+
+class TestSumPositiveContributions:
+    def test_no_negatives_is_unchanged(self):
+        balances = [
+            AccountBalance(name="expenses", amount=800.0),
+            AccountBalance(name="expenses:food", amount=300.0),
+            AccountBalance(name="expenses:rent", amount=500.0),
+        ]
+        result = DataTransformer.sum_positive_contributions(balances)
+        assert [ab.amount for ab in result] == [800.0, 300.0, 500.0]
+
+    def test_negative_leaf_excluded(self):
+        balances = [
+            AccountBalance(name="expenses", amount=650.0),
+            AccountBalance(name="expenses:food", amount=150.0),
+            AccountBalance(name="expenses:food:groceries", amount=200.0),
+            AccountBalance(name="expenses:food:dining", amount=-50.0),
+            AccountBalance(name="expenses:rent", amount=500.0),
+        ]
+        result = DataTransformer.sum_positive_contributions(balances)
+        by_name = {ab.name: ab.amount for ab in result}
+        assert by_name["expenses:food:dining"] == 0.0
+
+    def test_ancestors_rebuilt_from_positive_contributions(self):
+        balances = [
+            AccountBalance(name="expenses", amount=650.0),
+            AccountBalance(name="expenses:food", amount=150.0),
+            AccountBalance(name="expenses:food:groceries", amount=200.0),
+            AccountBalance(name="expenses:food:dining", amount=-50.0),
+            AccountBalance(name="expenses:rent", amount=500.0),
+        ]
+        result = DataTransformer.sum_positive_contributions(balances)
+        by_name = {ab.name: ab.amount for ab in result}
+        # food's real net (150) can't be rendered without its negative
+        # child, so it's rebuilt from the positive children only (200 + 0)
+        assert by_name["expenses:food"] == 200.0
+        # expenses in turn matches its children's sum (food + rent)
+        assert by_name["expenses"] == 700.0
+        assert by_name["expenses:rent"] == 500.0
+
+    def test_entirely_negative_branch_does_not_inflate_ancestors(self):
+        """A whole branch net negative (e.g. a refund with no matching spend
+        in the reported period) must not cascade extra inflation up the tree
+        beyond the positive contributions actually present elsewhere."""
+        balances = [
+            AccountBalance(name="expenses", amount=670.0),
+            AccountBalance(name="expenses:electronics", amount=-30.0),
+            AccountBalance(name="expenses:electronics:tv", amount=-50.0),
+            AccountBalance(name="expenses:electronics:cable", amount=20.0),
+            AccountBalance(name="expenses:groceries", amount=200.0),
+            AccountBalance(name="expenses:rent", amount=500.0),
+        ]
+        result = DataTransformer.sum_positive_contributions(balances)
+        by_name = {ab.name: ab.amount for ab in result}
+        assert by_name["expenses:electronics:tv"] == 0.0
+        # electronics keeps only its positive contribution (cable, 20)
+        assert by_name["expenses:electronics"] == 20.0
+        # expenses sums the positive contributions actually present: cable
+        # (20) + groceries (200) + rent (500) = 720, not more
+        assert by_name["expenses"] == 720.0
+
+    def test_no_amounts_are_negative(self):
+        balances = [
+            AccountBalance(name="expenses", amount=650.0),
+            AccountBalance(name="expenses:food", amount=150.0),
+            AccountBalance(name="expenses:food:groceries", amount=200.0),
+            AccountBalance(name="expenses:food:dining", amount=-50.0),
+            AccountBalance(name="expenses:rent", amount=500.0),
+        ]
+        result = DataTransformer.sum_positive_contributions(balances)
+        assert all(ab.amount >= 0 for ab in result)
+
+    def test_preserves_order_and_names(self):
+        balances = [
+            AccountBalance(name="expenses", amount=650.0),
+            AccountBalance(name="expenses:food", amount=150.0),
+        ]
+        result = DataTransformer.sum_positive_contributions(balances)
+        assert [ab.name for ab in result] == ["expenses", "expenses:food"]
